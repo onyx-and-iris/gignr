@@ -1,3 +1,3 @@
-# gign
+# gignr
 
-A CLI to create `.gigignore` files using templates.
+A CLI to create `.gitignore` files using templates.
