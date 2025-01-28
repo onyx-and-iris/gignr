@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	cc "github.com/ivanpirog/coloredcobra"
 	"github.com/spf13/cobra"
 )
@@ -10,11 +12,11 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "gignr",
 	Short: "Effortlessly manage and generate .gitignore files",
-	Long: `gignr is a CLI tool designed to help you fetch, manage, and customize .gitignore templates 
+	Long: fmt.Sprintf(`gignr is a CLI tool designed to help you fetch, manage, and customize .gitignore templates 
 from popular repositories. Simplify your project setup with ease.
 
 Created by github.com/jasonuc.
-Visit https://github.com/jasonuc/gignr for more information.`,
+Visit %v for more information.`, color.New(color.FgBlue).Sprint("https://github.com/jasonuc/gignr")),
 }
 
 func Execute() {
