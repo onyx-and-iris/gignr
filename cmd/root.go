@@ -34,7 +34,3 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-func init() {
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gignr.yaml)")
-}
