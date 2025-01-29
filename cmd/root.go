@@ -18,10 +18,6 @@ from popular repositories. Simplify your project setup with ease.
 
 Created by github.com/jasonuc.
 Visit %v for more information.`, color.New(color.FgBlue).Sprint("https://github.com/jasonuc/gignr")),
-	Run: func(cmd *cobra.Command, args []string) {
-		viper.Set("aaa", "vvv")
-		viper.WriteConfig()
-	},
 }
 
 func Execute() {
