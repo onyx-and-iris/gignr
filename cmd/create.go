@@ -3,12 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/jasonuc/gignr/internal/templates"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var createCmd = &cobra.Command{
@@ -79,7 +77,7 @@ Available templates are identified by prefixes:
 				source = reqPrefix
 			} else {
 				// Fetch from local storage
-				content, err = getLocalTemplate(arg)
+				content, err = templates.GetLocalTemplate(arg)
 				source = "local"
 			}
 
@@ -105,15 +103,4 @@ Available templates are identified by prefixes:
 
 func init() {
 	rootCmd.AddCommand(createCmd)
-}
-
-// Fetch local template content
-func getLocalTemplate(name string) ([]byte, error) {
-	storagePath := viper.GetString("templates.storage_path")
-	if storagePath == "" {
-		storagePath = filepath.Join(os.Getenv("HOME"), ".config/gignr/templates")
-	}
-
-	templatePath := filepath.Join(storagePath, name+".gitignore")
-	return os.ReadFile(templatePath)
 }
