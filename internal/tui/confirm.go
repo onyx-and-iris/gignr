@@ -10,7 +10,6 @@ import (
 func RunConfirmation(prompt string) bool {
 	var confirmed bool
 
-	// Create a confirmation form with a group
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
@@ -21,7 +20,6 @@ func RunConfirmation(prompt string) bool {
 		),
 	)
 
-	// Display the prompt
 	err := form.Run()
 	if err != nil {
 		fmt.Println("Error:", err)
