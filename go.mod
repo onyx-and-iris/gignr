@@ -4,14 +4,17 @@ go 1.23.4
 
 require (
 	github.com/fatih/color v1.18.0
+	github.com/google/go-github/v57 v57.0.0
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	golang.org/x/mod v0.23.0
+	golang.org/x/oauth2 v0.25.0
 )
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
