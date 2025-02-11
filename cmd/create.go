@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Delta456/box-cli-maker/v2"
 	"github.com/jasonuc/gignr/internal/templates"
 	"github.com/spf13/cobra"
 )
@@ -86,7 +87,10 @@ Available templates are identified by prefixes:
 				continue
 			}
 
-			mergedContent.WriteString(fmt.Sprintf("\n##########  %s Template (%s)  ##########\n\n", strings.ToUpper(arg), strings.ToUpper(source)))
+			config := box.Config{Px: 1, Py: 1, Type: "", TitlePos: "Inside"}
+			boxNew := box.Box{TopRight: "*", TopLeft: "*", BottomRight: "*", BottomLeft: "*", Horizontal: "-", Vertical: "|", Config: config}
+
+			mergedContent.WriteString(boxNew.String("", fmt.Sprintf(" %s Template (%s)", strings.ToUpper(arg), strings.ToUpper(source))))
 			mergedContent.Write(content)
 			mergedContent.WriteString("\n\n")
 		}
