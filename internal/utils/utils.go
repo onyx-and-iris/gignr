@@ -10,3 +10,9 @@ func ExtractRepoDetails(url string) (string, string) {
 	}
 	return "", ""
 }
+
+// MatchRepoURL checks if a given path belongs to a user-added repository
+func MatchRepoURL(repoURL, path string) bool {
+	owner, repo := ExtractRepoDetails(repoURL)
+	return strings.Contains(path, owner+"/"+repo)
+}
