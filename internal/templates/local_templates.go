@@ -16,3 +16,8 @@ func GetLocalTemplate(name string) ([]byte, error) {
 	templatePath := filepath.Join(storagePath, name+".gitignore")
 	return os.ReadFile(templatePath)
 }
+
+func LocalTemplateExists(name string) bool {
+	_, err := GetLocalTemplate(name)
+	return !os.IsNotExist(err)
+}
