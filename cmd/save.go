@@ -8,6 +8,7 @@ import (
 
 	"github.com/jasonuc/gignr/internal/templates"
 	"github.com/jasonuc/gignr/internal/tui"
+	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,26 +28,26 @@ var saveCmd = &cobra.Command{
 		gitignorePath := ".gitignore"
 
 		if _, err := os.Stat(gitignorePath); os.IsNotExist(err) {
-			fmt.Println("No .gitignore file found in the current directory.")
+			utils.PrintError("No .gitignore file found in the current directory.")
 			return
 		}
 
 		if !isValidTemplateName(saveName) {
-			fmt.Println("Invalid name. Template names can only contain letters, numbers, dashes, and underscores.")
+			utils.PrintError("Invalid name. Template names can only contain letters, numbers, dashes, and underscores.")
 			return
 		}
 
 		if templates.LocalTemplateExists(saveName) {
 			if !tui.RunConfirmation(fmt.Sprintf("Template '%s' already exists. Overwrite?", saveName)) {
-				fmt.Println("Operation canceled.")
+				utils.PrintAlert("Operation canceled.")
 				return
 			}
 		}
 
 		if err := saveLocally(saveName, gitignorePath); err != nil {
-			fmt.Println("Error saving locally:", err)
+			utils.PrintError(fmt.Sprint("Unable to save template:", err))
 		} else {
-			fmt.Println("Successfully saved locally as:", saveName)
+			utils.PrintSuccess(fmt.Sprintf("Template '%s' saved.", saveName))
 		}
 	},
 }
