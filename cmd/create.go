@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/jasonuc/gignr/internal/templates"
@@ -12,7 +13,7 @@ import (
 
 var createCmd = &cobra.Command{
 	Use:     "create <template> [templates]...",
-	Example: "gignr create gh:Go tt:clion jc:Rust",
+	Example: "gignr create gh:Go tt:clion my-template",
 	Args:    cobra.MinimumNArgs(1),
 	Short:   "Generate a .gitignore file using one or more templates",
 	Long: `The create command generates a .gitignore file based on one or more templates of your choice.
@@ -22,83 +23,76 @@ Available templates are identified by prefixes:
   - gh: GitHub templates
   - ghg: GitHub Global templates
   - ghc: GitHub Community templates
-  - [nickname]: User-added repositories
+  - (no prefix) → Fetch from local saved templates
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		var mergedContent strings.Builder
+
 		templates.InitGitHubClient("")
 
-		// Load user-added repositories
-		userRepos := viper.GetStringMapString("repositories")
-
 		for _, arg := range args {
-			req := strings.SplitAfter(arg, ":")
-			reqPrefix := strings.TrimSpace(req[0][:len(req[0])-1])
-			templateName := strings.TrimSpace(req[1])
+			var content []byte
+			var err error
+			var source string
 
-			// Define repo owner, repo name, and path for different sources
-			var owner, repo, path string
+			if strings.Contains(arg, ":") {
 
-			switch reqPrefix {
-			case "tt":
-				owner, repo, path = "toptal", "gitignore", "templates"
-			case "gh":
-				owner, repo, path = "github", "gitignore", ""
-			case "ghc":
-				owner, repo, path = "github", "gitignore", "community"
-			case "ghg":
-				owner, repo, path = "github", "gitignore", "Global"
-			default:
-				// Check if the prefix is a user-added repo
-				if repoURL, exists := userRepos[reqPrefix]; exists {
-					// Extract owner and repo from the URL
-					splitURL := strings.Split(strings.TrimPrefix(repoURL, "https://github.com/"), "/")
-					if len(splitURL) < 2 {
-						fmt.Printf("Invalid repository format for %s: %s\n", reqPrefix, repoURL)
-						continue
-					}
-					owner, repo, path = splitURL[0], splitURL[1], ""
-				} else {
+				req := strings.SplitAfter(arg, ":")
+				reqPrefix := strings.TrimSpace(req[0][:len(req[0])-1])
+				templateName := strings.TrimSpace(req[1])
+
+				var owner, repo, path string
+				switch reqPrefix {
+				case "tt":
+					owner, repo, path = "toptal", "gitignore", "templates"
+				case "gh":
+					owner, repo, path = "github", "gitignore", ""
+				case "ghc":
+					owner, repo, path = "github", "gitignore", "community"
+				case "ghg":
+					owner, repo, path = "github", "gitignore", "Global"
+				default:
 					fmt.Printf("Unknown template prefix: %s\n", reqPrefix)
 					continue
 				}
-			}
 
-			// Fetch available templates
-			templateList, err := templates.FetchTemplates(owner, repo, path)
-			if err != nil {
-				fmt.Printf("Error fetching templates from %s: %v\n", reqPrefix, err)
-				continue
-			}
-
-			// Find the requested template
-			var downloadURL string
-			for _, tmpl := range templateList {
-				if strings.EqualFold(tmpl.Name, templateName+".gitignore") {
-					downloadURL = tmpl.DownloadURL
-					break
+				templateList, err := templates.FetchTemplates(owner, repo, path)
+				if err != nil {
+					fmt.Printf("Error fetching templates from %s: %v\n", reqPrefix, err)
+					continue
 				}
+
+				var downloadURL string
+				for _, tmpl := range templateList {
+					if strings.EqualFold(tmpl.Name, templateName+".gitignore") {
+						downloadURL = tmpl.DownloadURL
+						break
+					}
+				}
+
+				if downloadURL == "" {
+					fmt.Printf("Template %s not found in %s.\n", templateName, reqPrefix)
+					continue
+				}
+
+				content, err = templates.FetchContent(downloadURL)
+				source = reqPrefix
+			} else {
+				// Fetch from local storage
+				content, err = getLocalTemplate(arg)
+				source = "local"
 			}
 
-			if downloadURL == "" {
-				fmt.Printf("Template %s not found in %s.\n", templateName, reqPrefix)
-				continue
-			}
-
-			// Fetch the raw .gitignore content
-			content, err := templates.FetchContent(downloadURL)
 			if err != nil {
-				fmt.Printf("Error fetching content for %s: %v\n", templateName, err)
+				fmt.Printf("Error fetching content for %s: %v\n", arg, err)
 				continue
 			}
 
-			// Merge content
-			mergedContent.WriteString(fmt.Sprintf("\n##########  %s Template (%s)  ##########\n\n", strings.ToUpper(templateName), strings.ToUpper(reqPrefix)))
+			mergedContent.WriteString(fmt.Sprintf("\n##########  %s Template (%s)  ##########\n\n", strings.ToUpper(arg), strings.ToUpper(source)))
 			mergedContent.Write(content)
 			mergedContent.WriteString("\n\n")
 		}
 
-		// Write to .gitignore
 		err := os.WriteFile(".gitignore", []byte(mergedContent.String()), 0644)
 		if err != nil {
 			fmt.Printf("Failed to write .gitignore file: %v\n", err)
@@ -111,4 +105,15 @@ Available templates are identified by prefixes:
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+}
+
+// Fetch local template content
+func getLocalTemplate(name string) ([]byte, error) {
+	storagePath := viper.GetString("templates.storage_path")
+	if storagePath == "" {
+		storagePath = filepath.Join(os.Getenv("HOME"), ".config/gignr/templates")
+	}
+
+	templatePath := filepath.Join(storagePath, name+".gitignore")
+	return os.ReadFile(templatePath)
 }
