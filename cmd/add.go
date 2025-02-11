@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jasonuc/gignr/internal/tui"
+	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -24,13 +25,13 @@ var addCmd = &cobra.Command{
 
 		// Validate URL
 		if !isValidGitHubURL(repoURL) {
-			fmt.Println("Invalid GitHub URL. Must be in format: https://github.com/{user}/{repo}")
+			utils.PrintError("Invalid GitHub URL. Must be in format: https://github.com/{user}/{repo}")
 			return
 		}
 
 		// Validate nickname
 		if isReservedNickname(nickname) {
-			fmt.Println("Invalid nickname. Reserved names: gh, ghc, ghg, tt.")
+			utils.PrintError("Invalid nickname. Reserved names: gh, ghc, ghg, tt.")
 			return
 		}
 
@@ -41,7 +42,7 @@ var addCmd = &cobra.Command{
 		if _, exists := repos[nickname]; exists {
 			prompt := fmt.Sprintf("The nickname '%s' already exists. Overwrite?\n%s → %s", nickname, nickname, repoURL)
 			if !tui.RunConfirmation(prompt) {
-				fmt.Println("Operation canceled.")
+				utils.PrintAlert("Operation canceled.")
 				return
 			}
 		}
@@ -52,11 +53,11 @@ var addCmd = &cobra.Command{
 
 		// Write changes to config file
 		if err := viper.WriteConfig(); err != nil {
-			fmt.Println("Error saving repository:", err)
+			utils.PrintError(fmt.Sprint("Unable to saving repository:", err))
 			return
 		}
 
-		fmt.Printf("Successfully added repository %s as %s\n", repoURL, nickname)
+		utils.PrintSuccess(fmt.Sprintf("Added repository %s as %s\n", repoURL, nickname))
 	},
 }
 
@@ -71,7 +72,7 @@ func isValidGitHubURL(url string) bool {
 	if len(url) > 19 && url[:19] == "https://github.com/" {
 		resp, err := http.Get(url)
 		if err != nil {
-			fmt.Println("Warning: Could not verify repository (network error). Assuming invalid.")
+			utils.PrintWarning("Warning: Could not verify repository (network error). Assuming invalid.")
 			return false
 		}
 		defer resp.Body.Close()
