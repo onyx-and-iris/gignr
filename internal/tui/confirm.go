@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/huh"
+	"github.com/jasonuc/gignr/internal/utils"
 )
 
 // RunConfirmation displays a clean confirmation UI using huh
@@ -22,7 +23,7 @@ func RunConfirmation(prompt string) bool {
 
 	err := form.Run()
 	if err != nil {
-		fmt.Println("Error:", err)
+		utils.PrintError(fmt.Sprintf("Unable to run confirmation: %v", err))
 		return false
 	}
 

@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"regexp"
 
+	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/jasonuc/gignr/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +18,7 @@ var upgradeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		info := version.FromContext(cmd.Context())
 		if !info.IsOutdated {
-			fmt.Println("gignr is already up to date.")
+			utils.PrintAlert("gignr is already up to date.")
 			return
 		}
 
@@ -32,7 +33,7 @@ var upgradeCmd = &cobra.Command{
 		cobra.CheckErr(err)
 		re := regexp.MustCompile(`v\d+\.\d+\.\d+`)
 		version := re.FindString(string(b))
-		fmt.Printf("Successfully upgraded to %s!\n", version)
+		utils.PrintSuccess(fmt.Sprintf("gignr upgraded to %s\n", version))
 		os.Exit(0)
 	},
 }

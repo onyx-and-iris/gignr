@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"log"
+
+	"github.com/jasonuc/gignr/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +18,11 @@ Using the TUI, you can:
   - Filter templates by name or category.
   - Select templates to view details or mark them for use in other commands.
 `,
-	Run: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := tui.RunSearch(); err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+	},
 }
 
 func init() {

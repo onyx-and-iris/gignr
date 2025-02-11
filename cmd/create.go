@@ -7,6 +7,7 @@ import (
 
 	"github.com/Delta456/box-cli-maker/v2"
 	"github.com/jasonuc/gignr/internal/templates"
+	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -50,14 +51,11 @@ Available templates are identified by prefixes:
 					owner, repo, path = "github", "gitignore", "community"
 				case "ghg":
 					owner, repo, path = "github", "gitignore", "Global"
-				default:
-					fmt.Printf("Unknown template prefix: %s\n", reqPrefix)
-					continue
 				}
 
 				templateList, err := templates.FetchTemplates(owner, repo, path)
 				if err != nil {
-					fmt.Printf("Error fetching templates from %s: %v\n", reqPrefix, err)
+					utils.PrintError(fmt.Sprintf("Unable to fetch templates from %s: %v\n", reqPrefix, err))
 					continue
 				}
 
@@ -70,7 +68,7 @@ Available templates are identified by prefixes:
 				}
 
 				if downloadURL == "" {
-					fmt.Printf("Template %s not found in %s.\n", templateName, reqPrefix)
+					utils.PrintError(fmt.Sprintf("Template %s not found in %s.\n", templateName, reqPrefix))
 					continue
 				}
 
@@ -83,7 +81,7 @@ Available templates are identified by prefixes:
 			}
 
 			if err != nil {
-				fmt.Printf("Error fetching content for %s: %v\n", arg, err)
+				utils.PrintError(fmt.Sprintf("Unable to fetch content for %s: %v\n", arg, err))
 				continue
 			}
 
@@ -97,11 +95,11 @@ Available templates are identified by prefixes:
 
 		err := os.WriteFile(".gitignore", []byte(mergedContent.String()), 0644)
 		if err != nil {
-			fmt.Printf("Failed to write .gitignore file: %v\n", err)
+			utils.PrintError(fmt.Sprintf("Failed to write .gitignore file: %v\n", err))
 			return
 		}
 
-		fmt.Println("Successfully created .gitignore!")
+		utils.PrintSuccess("Created .gitignore!")
 	},
 }
 
