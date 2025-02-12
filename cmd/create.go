@@ -30,6 +30,9 @@ Available templates are identified by prefixes:
 
 		templates.InitGitHubClient("")
 
+		// Load user-added repositories
+		repos := templates.LoadCustomRepositories()
+
 		for _, arg := range args {
 			var content []byte
 			var err error
@@ -51,6 +54,15 @@ Available templates are identified by prefixes:
 					owner, repo, path = "github", "gitignore", "community"
 				case "ghg":
 					owner, repo, path = "github", "gitignore", "Global"
+				default:
+					// If the prefix is a user-defined repo, resolve its URL
+					if repoURL, exists := repos[reqPrefix]; exists {
+						owner, repo = utils.ExtractRepoDetails(repoURL)
+						path = ""
+					} else {
+						fmt.Printf("Unknown template prefix or missing repository: %s\n", reqPrefix)
+						continue
+					}
 				}
 
 				templateList, err := templates.FetchTemplates(owner, repo, path)
@@ -73,10 +85,10 @@ Available templates are identified by prefixes:
 					continue
 				}
 
-				content, err = templates.FetchContent(downloadURL)
+				content, err = templates.GetTemplateContent(downloadURL)
 				source = reqPrefix
 			} else {
-				// Fetch from local storage
+				// Attemt to fetch from local storage if no prefix is provided
 				content, err = templates.GetLocalTemplate(arg)
 				source = "local"
 			}
