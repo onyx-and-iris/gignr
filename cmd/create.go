@@ -60,7 +60,7 @@ Available templates are identified by prefixes:
 						owner, repo = utils.ExtractRepoDetails(repoURL)
 						path = ""
 					} else {
-						fmt.Printf("Unknown template prefix or missing repository: %s\n", reqPrefix)
+						utils.PrintError(fmt.Sprintf("Unknown template prefix or missing repository: %s\n", reqPrefix))
 						continue
 					}
 				}
