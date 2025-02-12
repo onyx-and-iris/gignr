@@ -2,6 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type TabModel struct {
@@ -59,5 +60,5 @@ func (m *TabModel) View() string {
 		}
 	}
 
-	return tabSection.Render(view)
+	return lipgloss.JoinHorizontal(lipgloss.Left, tabSection.Render(view), title.Render("gignr"))
 }
