@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -35,7 +34,7 @@ func MatchRepoURL(repoURL, path string) bool {
 
 func DetectSource(path string) string {
 	owner, repo := ExtractRepoDetails(path)
-	fmt.Println(path)
+
 	fullRepoPath := owner + "/" + repo
 
 	if fullRepoPath == "github/gitignore" {
@@ -54,7 +53,7 @@ func DetectSource(path string) string {
 
 	// Check user-added repositories
 	repos := viper.GetStringMapString("repositories")
-	fmt.Println(repos)
+
 	for nickname, repoURL := range repos {
 		if MatchRepoURL(repoURL, path) {
 			return "Custom (" + nickname + ")"
