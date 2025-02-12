@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type TemplateCache struct {
+type TemplateContentCache struct {
 	Updated time.Time `json:"updated"`
 	Content string    `json:"content"`
 }
