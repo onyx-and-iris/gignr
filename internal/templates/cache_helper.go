@@ -7,13 +7,15 @@ import (
 	"github.com/jasonuc/gignr/internal/cache"
 )
 
+type TemplatesCache struct {
+	Updated   time.Time  `json:"updated"`
+	Templates []Template `json:"templates"`
+}
+
 // LoadCachedTemplates retrieves the list of available templates from cache
 func LoadCachedTemplates(source string) ([]Template, error) {
 
-	var cacheData struct {
-		Updated   time.Time  `json:"updated"`
-		Templates []Template `json:"templates"`
-	}
+	var cacheData TemplatesCache
 
 	if err := cache.LoadCache(source, &cacheData); err != nil || cache.IsCacheExpired(cacheData.Updated) {
 		return nil, fmt.Errorf("cache expired or missing")
@@ -24,10 +26,7 @@ func LoadCachedTemplates(source string) ([]Template, error) {
 
 // SaveTemplatesToCache stores fetched templates in the cache
 func SaveTemplatesToCache(cacheFile string, templates []Template) {
-	cacheData := struct {
-		Updated   time.Time  `json:"updated"`
-		Templates []Template `json:"templates"`
-	}{
+	cacheData := TemplatesCache{
 		Updated:   time.Now(),
 		Templates: templates,
 	}
@@ -36,36 +35,25 @@ func SaveTemplatesToCache(cacheFile string, templates []Template) {
 }
 
 // LoadCachedTemplateContent retrieves the cached content of a specific template
-func LoadCachedTemplateContent(url string) (string, error) {
-	var cacheData = make(map[string]struct {
-		Updated time.Time `json:"updated"`
-		Content string    `json:"content"`
-	})
+func LoadCachedTemplateContent(url string) ([]byte, error) {
+	var cacheData = make(map[string]cache.TemplateContentCache)
 
-	if err := cache.LoadCache("template-content.json", &cacheData); err != nil {
-		return "", err
+	if err := cache.LoadCache("template-content.json", &cacheData); err == nil {
+		if entry, exists := cacheData[url]; exists && !cache.IsCacheExpired(entry.Updated) {
+			return []byte(entry.Content), nil
+		}
 	}
 
-	if entry, exists := cacheData[url]; exists && !cache.IsCacheExpired(entry.Updated) {
-		return entry.Content, nil
-	}
-
-	return "", fmt.Errorf("content not found in cache")
+	return nil, fmt.Errorf("content not found in cache")
 }
 
 // SaveTemplateContentToCache stores fetched `.gitignore` content in the cache
 func SaveTemplateContentToCache(url, content string) {
-	var cacheData = make(map[string]struct {
-		Updated time.Time `json:"updated"`
-		Content string    `json:"content"`
-	})
+	var cacheData = make(map[string]cache.TemplateContentCache)
 
 	cache.LoadCache("template-content.json", &cacheData)
 
-	cacheData[url] = struct {
-		Updated time.Time `json:"updated"`
-		Content string    `json:"content"`
-	}{
+	cacheData[url] = cache.TemplateContentCache{
 		Updated: time.Now(),
 		Content: content,
 	}
