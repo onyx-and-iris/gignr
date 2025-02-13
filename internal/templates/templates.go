@@ -49,7 +49,6 @@ func FetchTemplates(owner, repo, path string) ([]Template, error) {
 	cachedTemplates, err := LoadCachedTemplates(cacheFile)
 
 	if err == nil {
-		utils.PrintAlert(fmt.Sprint("Using cached templates from ", cacheFile))
 		return cachedTemplates, nil
 	}
 

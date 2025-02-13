@@ -16,6 +16,14 @@ type TemplateContentCache struct {
 
 func GetCacheDir() string {
 	configDir := filepath.Dir(viper.ConfigFileUsed())
+	if configDir == "." || configDir == "" {
+		// Use default config location
+		home, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+		configDir = filepath.Join(home, ".config", "gignr")
+	}
 	cacheDir := filepath.Join(configDir, "cache")
 
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {

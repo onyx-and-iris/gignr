@@ -243,8 +243,8 @@ func (m *TemplateListModel) renderTemplateItem(template TemplateEntry, isCurrent
 		builder.WriteString(checkboxStyle.Render("[ ] "))
 	}
 
-	// Template name
-	name := template.Name
+	// Template name - strip .gitignore extension for display
+	name := strings.TrimSuffix(template.Name, ".gitignore")
 	if isCurrent {
 		name = selectedItemStyle.Render(name)
 	} else {
