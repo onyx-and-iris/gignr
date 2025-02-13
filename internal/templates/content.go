@@ -7,7 +7,7 @@ import (
 
 // GetTemplateContent retrieves a `.gitignore` template (cached or fresh)
 func GetTemplateContent(url string) ([]byte, error) {
-	if cacheContent, err := LoadCachedTemplateContent(url); err != nil {
+	if cacheContent, err := LoadCachedTemplateContent(url); err == nil {
 		return cacheContent, nil
 	}
 

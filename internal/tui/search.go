@@ -33,6 +33,8 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+		case "C":
+			m.HandleSave()
 		case "left", "right", "tab":
 			// Update TabModel
 			m.Tab, cmd = m.Tab.Update(msg)
