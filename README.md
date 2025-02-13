@@ -89,7 +89,7 @@ repositories:
 You can update this manually or use:
 
 ```sh
-gignr add <repo-url> -n <nickname>
+gignr add https://github.com/jasonuc/crispy-guacamole -n jc
 ```
 
 ## 🏗️ Roadmap
