@@ -3,58 +3,118 @@ package tui
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	title = lipgloss.NewStyle().Padding(0, 2).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#7D56F4")).Foreground(lipgloss.Color("#7D56F4"))
-)
+	// Base colors
+	primaryColor    = lipgloss.Color("#7D56F4")
+	secondaryColor  = lipgloss.Color("#5A3DBF")
+	backgroundColor = lipgloss.Color("#1A1B26")
+	textColor       = lipgloss.Color("#C0CAF5")
+	mutedTextColor  = lipgloss.Color("#565F89")
+	successColor    = lipgloss.Color("#9ECE6A")
+	highlightColor  = lipgloss.Color("#BB9AF7")
 
-// TabModel
-var (
-	highlightColor   = lipgloss.Color("#7D56F4")
-	tabSection       = lipgloss.NewStyle().Padding(0, 2).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#7D56F4"))
-	inactiveTabStyle = lipgloss.NewStyle().Bold(true).Padding(0, 1)
-	activeTabStyle   = lipgloss.NewStyle().Inherit(inactiveTabStyle).
-				Background(lipgloss.Color("#7D56F4")).Padding(0, 1)
-	dividerStyle = lipgloss.NewStyle().SetString(" • ").Bold(true)
-)
+	// Common styles
+	baseStyle = lipgloss.NewStyle().
+			Background(backgroundColor).
+			Foreground(textColor)
 
-// TemplatesListModel
-var (
-	templateListBorderStyle = lipgloss.NewStyle().
+	// Title styles
+	title = lipgloss.NewStyle().
+		Padding(0, 2).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(primaryColor).
+		Foreground(primaryColor).
+		Bold(true)
+
+	// Tab styles
+	tabSection = lipgloss.NewStyle().
+			Padding(0, 2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(primaryColor)
+
+	inactiveTabStyle = lipgloss.NewStyle().
+				Bold(true).
+				Padding(0, 1).
+				Foreground(textColor)
+
+	activeTabStyle = lipgloss.NewStyle().
+			Bold(true).
+			Padding(0, 1).
+			Background(primaryColor).
+			Foreground(backgroundColor)
+
+	dividerStyle = lipgloss.NewStyle().
+			SetString(" • ").
+			Bold(true).
+			Foreground(mutedTextColor)
+
+	// Template list styles
+	templateListStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
-				Padding(1, 2)
+				BorderForeground(primaryColor).
+				Padding(0, 1).
+				Width(80)
 
-	templateSelectedStyle = lipgloss.NewStyle().
-				Background(lipgloss.Color("32")). // Green background for selected templates
-				Foreground(lipgloss.Color("0")).
-				Bold(true)
-
-	highlightedPointerStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("205")). // Pink for the pointer
-				Bold(true)
-)
-
-var (
 	sourceHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color("#7D56F4")).
-				Padding(0, 1).
-				MarginBottom(1)
-
-	templateItemStyle = lipgloss.NewStyle().
-				Padding(0, 2)
+				Foreground(primaryColor).
+				Padding(1).
+				MarginBottom(1).
+				Border(lipgloss.Border{
+			Bottom: "─",
+		}).
+		BorderForeground(mutedTextColor)
 
 	templateNameStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#FFFFFF"))
+				Foreground(textColor)
+
+	selectedItemStyle = lipgloss.NewStyle().
+				Foreground(backgroundColor).
+				Background(primaryColor).
+				Bold(true).
+				Padding(0, 1)
 
 	noTemplatesStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("#666666")).
+				Foreground(mutedTextColor).
 				Italic(true).
-				Padding(1, 2)
+				Align(lipgloss.Center).
+				Padding(2)
 
-	checkmarkStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#00FF00")).
-			Bold(true)
+	checkboxStyle = lipgloss.NewStyle().
+			Foreground(mutedTextColor)
 
 	pointerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7D56F4")).
+			Foreground(primaryColor).
 			Bold(true)
+
+	hotkeysStyle = lipgloss.NewStyle().
+			Foreground(mutedTextColor).
+			Italic(true).
+			Padding(0, 2).
+			MarginTop(1)
+
+	// Additional template list styles
+	templateItemStyle = lipgloss.NewStyle().
+				Padding(0, 1)
+
+	checkmarkStyle = lipgloss.NewStyle().
+			Foreground(successColor).
+			Bold(true)
+
+	// Status styles
+	statusStyle = lipgloss.NewStyle().
+			Foreground(backgroundColor).
+			Background(primaryColor).
+			Bold(true).
+			Padding(0, 1)
+
+	errorStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#F7768E")).
+			Bold(true).
+			Padding(0, 1)
+
+	// Progress styles
+	progressStyle = lipgloss.NewStyle().
+			Foreground(primaryColor).
+			Bold(true).
+			MarginTop(1)
 )
