@@ -51,6 +51,9 @@ var addCmd = &cobra.Command{
 		repos[nickname] = repoURL
 		viper.Set("repositories", repos)
 
+		// Set the refresh flag to true since we added a new repo
+		viper.Set("cache_needs_refresh", true)
+
 		// Write changes to config file
 		if err := viper.WriteConfig(); err != nil {
 			utils.PrintError(fmt.Sprint("Unable to saving repository:", err))
