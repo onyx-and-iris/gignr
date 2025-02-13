@@ -83,7 +83,7 @@ Located at: `~/.config/gignr/config.yaml`
 templates:
   storage_path: "~/.config/gignr/templates"
 repositories:
-  myrepo: "https://github.com/user/gitignore"
+  jc: "https://github.com/jasonuc/gitignore-templates"
 ```
 
 You can update this manually or use:
