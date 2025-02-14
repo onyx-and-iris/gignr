@@ -17,7 +17,6 @@ type TemplateContentCache struct {
 func GetCacheDir() string {
 	configDir := filepath.Dir(viper.ConfigFileUsed())
 	if configDir == "." || configDir == "" {
-		// Use default config location
 		home, err := os.UserHomeDir()
 		if err != nil {
 			panic(err)
@@ -33,7 +32,6 @@ func GetCacheDir() string {
 	return cacheDir
 }
 
-// LoadCache reads a JSON cache file and unmarshals it into a given structure
 func LoadCache(fileName string, target interface{}) error {
 	cachePath := filepath.Join(GetCacheDir(), fileName)
 	data, err := os.ReadFile(cachePath)
@@ -43,7 +41,6 @@ func LoadCache(fileName string, target interface{}) error {
 	return json.Unmarshal(data, target)
 }
 
-// SaveCache writes a given structure into a JSON cache file
 func SaveCache(fileName string, data interface{}) error {
 	cachePath := filepath.Join(GetCacheDir(), fileName)
 	content, err := json.MarshalIndent(data, "", "  ")

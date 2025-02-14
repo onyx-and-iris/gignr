@@ -11,15 +11,13 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Type represents whether a GitHub object is a directory or file
 type Type string
 
-var (
-	Directory Type = "dir"
-	File      Type = "file"
+const (
+	TypeDirectory Type = "dir"
+	TypeFile      Type = "file"
 )
 
-// Template represents a .gitignore file
 type Template struct {
 	Name        string
 	Path        string
@@ -27,80 +25,94 @@ type Template struct {
 	Source      string
 }
 
-// GitHub client
 var githubClient *github.Client
 
-// Initialize GitHub Client (supports authentication if needed)
 func InitGitHubClient(token string) {
-	if token != "" {
-		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-		tc := oauth2.NewClient(context.Background(), ts)
-		githubClient = github.NewClient(tc)
-	} else {
+	if token == "" {
 		githubClient = github.NewClient(nil)
+		return
 	}
+
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tc := oauth2.NewClient(context.Background(), ts)
+	githubClient = github.NewClient(tc)
 }
 
-// FetchTemplates lists `.gitignore` templates, first checking the cache
 func FetchTemplates(owner, repo, path, sourceID string) ([]Template, error) {
-	cacheFile := fmt.Sprintf("%s.json", owner)
-	if sourceID != "" {
-		cacheFile = fmt.Sprintf("%s.json", sourceID)
+	if templates, err := LoadCachedTemplates(getCacheFileName(owner, sourceID)); err == nil {
+		return templates, nil
 	}
 
-	// Check the cache first
-	cachedTemplates, err := LoadCachedTemplates(cacheFile)
-
-	if err == nil {
-		return cachedTemplates, nil
-	}
-
-	// If cache is missing or expired, fetch from GitHub
-	ctx := context.Background()
-	contents, dirContents, _, err := githubClient.Repositories.GetContents(ctx, owner, repo, path, nil)
+	templates, err := fetchFromGitHub(owner, repo, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch templates: %w", err)
 	}
 
-	var templates []Template
-	var wg sync.WaitGroup
+	SaveTemplatesToCache(getCacheFileName(owner, sourceID), templates)
+	return templates, nil
+}
 
-	// Case 1: If `contents` is a single file
-	if contents != nil {
-		if strings.HasSuffix(contents.GetName(), ".gitignore") {
-			templates = append(templates, Template{
-				Name:        contents.GetName(),
-				Path:        contents.GetPath(),
-				DownloadURL: contents.GetDownloadURL(),
-				Source:      utils.DetectSource(contents.GetURL()),
-			})
-		}
-	} else {
-		// Case 2: If `dirContents` is a list of files/directories
-		for _, content := range dirContents {
-			if content.GetType() == "file" && strings.HasSuffix(content.GetName(), ".gitignore") {
-				templates = append(templates, Template{
-					Name:        content.GetName(),
-					Path:        content.GetPath(),
-					DownloadURL: content.GetDownloadURL(),
-					Source:      utils.DetectSource(content.GetURL()),
-				})
-			} else if content.GetType() == "dir" {
-				// Recursively fetch templates from directories (Global, Community, etc.)
-				wg.Add(1)
-				go func(subPath string) {
-					defer wg.Done()
-					subTemplates, err := FetchTemplates(owner, repo, subPath, sourceID)
-					if err == nil {
-						templates = append(templates, subTemplates...)
-					}
-				}(content.GetPath())
-			}
-		}
-		wg.Wait()
+func getCacheFileName(owner, sourceID string) string {
+	if sourceID != "" {
+		return fmt.Sprintf("%s.json", sourceID)
+	}
+	return fmt.Sprintf("%s.json", owner)
+}
+
+func fetchFromGitHub(owner, repo, path string) ([]Template, error) {
+	ctx := context.Background()
+	contents, dirContents, _, err := githubClient.Repositories.GetContents(ctx, owner, repo, path, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	// Save the fetched templates to the cache to avoid overloading the GitHub API
-	SaveTemplatesToCache(cacheFile, templates)
-	return templates, nil
+	if contents != nil {
+		return handleSingleFile(contents), nil
+	}
+	return handleDirectory(owner, repo, dirContents), nil
+}
+
+func handleSingleFile(content *github.RepositoryContent) []Template {
+	if !strings.HasSuffix(content.GetName(), ".gitignore") {
+		return nil
+	}
+
+	return []Template{{
+		Name:        content.GetName(),
+		Path:        content.GetPath(),
+		DownloadURL: content.GetDownloadURL(),
+		Source:      utils.DetectSource(content.GetURL()),
+	}}
+}
+
+func handleDirectory(owner, repo string, contents []*github.RepositoryContent) []Template {
+	var templates []Template
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	for _, content := range contents {
+		if content.GetType() == "file" {
+			if tmpl := handleSingleFile(content); tmpl != nil {
+				templates = append(templates, tmpl...)
+			}
+			continue
+		}
+
+		if content.GetType() == "dir" {
+			wg.Add(1)
+			go func(subPath string) {
+				defer wg.Done()
+				subTemplates, err := fetchFromGitHub(owner, repo, subPath)
+				if err != nil {
+					return
+				}
+				mu.Lock()
+				templates = append(templates, subTemplates...)
+				mu.Unlock()
+			}(content.GetPath())
+		}
+	}
+
+	wg.Wait()
+	return templates
 }
