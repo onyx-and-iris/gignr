@@ -34,7 +34,7 @@
 ### 🛠️ **Creating a `.gitignore` File**
 
 ```sh
-gignr create gh:Go tt:clion my-local-template
+gignr create gh:Go tt:clion best_go_gitignore
 ```
 
 - `gh:` → Fetch from **GitHub**
@@ -46,7 +46,7 @@ gignr create gh:Go tt:clion my-local-template
 ### 🎯 **Adding a Custom Repository**
 
 ```sh
-gignr add https://github.com/user/gitignore -n myrepo
+gignr add https://github.com/jasonuc/gitignore-templates -n jc
 ```
 
 - `-n myrepo` sets a **nickname** for the repository.
@@ -57,17 +57,17 @@ gignr add https://github.com/user/gitignore -n myrepo
 gignr search
 ```
 
-- **Navigate sources**: `←/→`
+- **Navigate sources**: `←/→`, `tab`
 - **Select template**: `Enter`
 - **Filter templates**: Start typing
 - **Preview & generate**: `Shift + C`
 - **Generate from selection**: `Shift + S`
-- **Exit**: `q`
+- **Exit**: `Ctrl + C`
 
 ### 💾 **Saving a Custom `.gitignore`**
 
 ```sh
-gignr save my-template
+gignr save best_go_gitignore
 ```
 
 - Saves `.gitignore` from the **current directory** to **local storage**.
@@ -82,12 +82,6 @@ templates:
   storage_path: "~/.config/gignr/templates"
 repositories:
   jc: "https://github.com/jasonuc/gitignore-templates"
-```
-
-You can update this manually or use:
-
-```sh
-gignr add https://github.com/jasonuc/gitignore-templates -n jc
 ```
 
 ## 🤝 Contributing
