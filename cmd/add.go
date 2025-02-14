@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/jasonuc/gignr/internal/cache"
 	"github.com/jasonuc/gignr/internal/tui"
@@ -24,14 +22,16 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		repoURL = args[0]
 
-		// Validate URL
-		if !isValidGitHubURL(repoURL) {
+		// Validate URL and nickname
+		if !utils.IsValidGitHubURL(repoURL) {
 			utils.PrintError("Invalid GitHub URL. Must be in format: https://github.com/{user}/{repo}")
 			return
 		}
-
-		// Validate nickname
-		if isReservedNickname(nickname) {
+		if !utils.IsValidNickname(nickname) {
+			utils.PrintError("Invalid nickname. Must be alphanumeric and contain no spaces.")
+			return
+		}
+		if utils.IsReservedNickname(nickname) {
 			utils.PrintError("Invalid nickname. Reserved names: gh, ghc, ghg, tt.")
 			return
 		}
@@ -52,16 +52,15 @@ var addCmd = &cobra.Command{
 		repos[nickname] = repoURL
 		viper.Set("repositories", repos)
 
-		// Set the refresh flag to true since we added a new repo
 		cache.UpdateCacheNeedRefreshStatus(true)
 
 		// Write changes to config file
 		if err := viper.WriteConfig(); err != nil {
-			utils.PrintError(fmt.Sprint("Unable to saving repository:", err))
+			utils.PrintError(fmt.Sprintf("Unable to save repository: %v", err))
 			return
 		}
 
-		utils.PrintSuccess(fmt.Sprintf("Added repository %s as %s\n", repoURL, nickname))
+		utils.PrintSuccess(fmt.Sprintf("Added repository %s as %s\nUse with: gignr create %s:template-name", repoURL, nickname, nickname))
 	},
 }
 
@@ -69,25 +68,4 @@ func init() {
 	addCmd.Flags().StringVarP(&nickname, "nickname", "n", "", "Nickname for the repository")
 	addCmd.MarkFlagRequired("nickname")
 	rootCmd.AddCommand(addCmd)
-}
-
-// isValidGitHubURL checks if a URL is a valid GitHub repo URL
-func isValidGitHubURL(url string) bool {
-	if len(url) > 19 && url[:19] == "https://github.com/" {
-		resp, err := http.Get(url)
-		if err != nil {
-			utils.PrintWarning("Warning: Could not verify repository (network error). Assuming invalid.")
-			return false
-		}
-		defer resp.Body.Close()
-
-		return resp.StatusCode == http.StatusOK
-	}
-	return false
-}
-
-// isReservedNickname ensures nickname is not a reserved name
-func isReservedNickname(nickname string) bool {
-	reserved := map[string]bool{"gh": true, "ghc": true, "ghg": true, "tt": true}
-	return reserved[strings.ToLower(nickname)]
 }

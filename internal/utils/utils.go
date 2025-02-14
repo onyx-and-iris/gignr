@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -73,4 +74,33 @@ func DetectSource(path string) string {
 	}
 
 	return "Unknown"
+}
+
+func IsValidGitHubURL(url string) bool {
+	if len(url) > 19 && url[:19] == "https://github.com/" {
+		resp, err := http.Get(url)
+		if err != nil {
+			PrintWarning("Warning: Could not verify repository (network error). Assuming invalid.")
+			return false
+		}
+		defer resp.Body.Close()
+
+		return resp.StatusCode == http.StatusOK
+	}
+	return false
+}
+
+func IsReservedNickname(nickname string) bool {
+	reserved := map[string]bool{"gh": true, "ghc": true, "ghg": true, "tt": true}
+	return reserved[strings.ToLower(nickname)]
+}
+
+func IsValidNickname(nickname string) bool {
+	if nickname == "" {
+		return false
+	}
+	if strings.Contains(nickname, " ") {
+		return false
+	}
+	return true
 }
