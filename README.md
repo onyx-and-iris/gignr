@@ -60,8 +60,7 @@ gignr search
 - **Navigate sources**: `←/→`, `tab`
 - **Select template**: `Enter`
 - **Filter templates**: Start typing
-- **Get command to generate**: `Shift + C`
-- **Generate from selection**: `Shift + S`
+- **Copy command to generate selection**: `Shift + C`
 - **Exit**: `Ctrl + C`
 
 ### 💾 **Saving a Custom `.gitignore`**
