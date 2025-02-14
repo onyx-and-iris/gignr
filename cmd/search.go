@@ -57,8 +57,8 @@ func refreshCustomRepos() {
 
 	repos := viper.GetStringMapString("repositories")
 	for nickname, repoURL := range repos {
-		owner, repo, ok := utils.ExtractRepoDetails(repoURL)
-		if !ok {
+		owner, repo, err := utils.ExtractRepoDetails(repoURL)
+		if err != nil {
 			utils.PrintWarning(fmt.Sprintf("Invalid repository URL format for %s", nickname))
 			continue
 		}

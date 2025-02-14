@@ -79,8 +79,8 @@ func resolveTemplateSource(prefix string, repos map[string]string) (*TemplateSou
 	default:
 		// Check user-defined repos
 		if repoURL, exists := repos[prefix]; exists {
-			owner, repo, ok := utils.ExtractRepoDetails(repoURL)
-			if !ok {
+			owner, repo, err := utils.ExtractRepoDetails(repoURL)
+			if err != nil {
 				return nil, fmt.Errorf("invalid repository URL for prefix %s", prefix)
 			}
 			return &TemplateSource{owner, repo, ""}, nil
