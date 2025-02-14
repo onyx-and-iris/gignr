@@ -65,7 +65,7 @@ Available templates are identified by prefixes:
 					}
 				}
 
-				templateList, err := templates.FetchTemplates(owner, repo, path)
+				templateList, err := templates.FetchTemplates(owner, repo, path, reqPrefix)
 				if err != nil {
 					utils.PrintError(fmt.Sprintf("Unable to fetch templates from %s: %v\n", reqPrefix, err))
 					utils.PrintAlert("No .gitignore file created.")

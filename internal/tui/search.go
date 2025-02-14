@@ -31,21 +31,18 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 		case "C":
 			m.HandleSave()
 		case "left", "right", "tab":
-			// Update TabModel
 			m.Tab, cmd = m.Tab.Update(msg)
 			cmds = append(cmds, cmd)
 
-			// Update TemplateListModel's ActiveSource
 			tab, ok := m.Tab.(*TabModel)
 			if !ok {
 				return m, tea.Quit
 			}
-			// Make sure tab names match source names exactly
 			newSource := templateSrc(tab.tabs[tab.currentTab])
 			m.TemplateList, cmd = m.TemplateList.Update(sourceChangeMsg{newSource})
 			cmds = append(cmds, cmd)

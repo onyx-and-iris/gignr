@@ -42,8 +42,11 @@ func InitGitHubClient(token string) {
 }
 
 // FetchTemplates lists `.gitignore` templates, first checking the cache
-func FetchTemplates(owner, repo, path string) ([]Template, error) {
-	cacheFile := fmt.Sprintf("%s.json", owner) // Use owner name to determine cache file
+func FetchTemplates(owner, repo, path, sourceID string) ([]Template, error) {
+	cacheFile := fmt.Sprintf("%s.json", owner)
+	if sourceID != "" {
+		cacheFile = fmt.Sprintf("%s.json", sourceID)
+	}
 
 	// Check the cache first
 	cachedTemplates, err := LoadCachedTemplates(cacheFile)
@@ -87,7 +90,7 @@ func FetchTemplates(owner, repo, path string) ([]Template, error) {
 				wg.Add(1)
 				go func(subPath string) {
 					defer wg.Done()
-					subTemplates, err := FetchTemplates(owner, repo, subPath)
+					subTemplates, err := FetchTemplates(owner, repo, subPath, sourceID)
 					if err == nil {
 						templates = append(templates, subTemplates...)
 					}

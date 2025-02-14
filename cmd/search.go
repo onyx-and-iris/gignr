@@ -35,14 +35,14 @@ Using the TUI, you can:
 
 		// Check and fetch GitHub templates
 		if _, err := os.Stat(filepath.Join(cacheDir, "github.json")); os.IsNotExist(err) {
-			if fetchableTemplates, err := templates.FetchTemplates("github", "gitignore", ""); err == nil {
+			if fetchableTemplates, err := templates.FetchTemplates("github", "gitignore", "", ""); err == nil {
 				templates.SaveTemplatesToCache("github.json", fetchableTemplates)
 			}
 		}
 
 		// Check and fetch TopTal templates
 		if _, err := os.Stat(filepath.Join(cacheDir, "toptal.json")); os.IsNotExist(err) {
-			if fetchableTemplates, err := templates.FetchTemplates("toptal", "gitignore", "templates"); err == nil {
+			if fetchableTemplates, err := templates.FetchTemplates("toptal", "gitignore", "templates", ""); err == nil {
 				templates.SaveTemplatesToCache("toptal.json", fetchableTemplates)
 			}
 		}
@@ -64,7 +64,7 @@ Using the TUI, you can:
 				repo := parts[4]
 
 				// Fetch fetchedTemplates from this repo
-				if fetchedTemplates, err := templates.FetchTemplates(owner, repo, ""); err == nil {
+				if fetchedTemplates, err := templates.FetchTemplates(owner, repo, "", nickname); err == nil {
 					// Save to cache with nickname as identifier
 					cacheFile := fmt.Sprintf("%s.json", nickname)
 					templates.SaveTemplatesToCache(cacheFile, fetchedTemplates)
