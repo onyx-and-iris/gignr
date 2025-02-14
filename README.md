@@ -1,7 +1,5 @@
 # gignr
 
-> ⚠️ **Work in Progress**: This project is still being actively developed. Expect changes and improvements!
-
 `gignr` is a powerful **CLI tool** designed to help developers fetch, manage, and create `.gitignore` templates with ease. It integrates templates from **GitHub**, **TopTal**, and user-defined repositories.
 
 ## ✨ Features
@@ -91,11 +89,6 @@ You can update this manually or use:
 ```sh
 gignr add https://github.com/jasonuc/crispy-guacamole -n jc
 ```
-
-## 🏗️ Roadmap
-
-- 🔄 Implement search using TUI.
-- 🔄 Add `.gitignore` preview functionality.
 
 ## 🤝 Contributing
 
