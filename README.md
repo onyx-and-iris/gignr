@@ -60,7 +60,7 @@ gignr search
 - **Navigate sources**: `←/→`, `tab`
 - **Select template**: `Enter`
 - **Filter templates**: Start typing
-- **Preview & generate**: `Shift + C`
+- **Get command to generate**: `Shift + C`
 - **Generate from selection**: `Shift + S`
 - **Exit**: `Ctrl + C`
 
