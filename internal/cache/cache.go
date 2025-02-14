@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/viper"
 )
 
@@ -53,4 +54,11 @@ func SaveCache(fileName string, data interface{}) error {
 // IsCacheExpired checks if a cache entry is expired (TTL: 2 weeks)
 func IsCacheExpired(updatedTime time.Time) bool {
 	return time.Since(updatedTime) > 14*24*time.Hour
+}
+
+func UpdateCacheNeedRefreshStatus(newStatus bool) {
+	viper.Set("cache_needs_refresh", newStatus)
+	if err := viper.WriteConfig(); err != nil {
+		utils.PrintWarning("Failed to update cache refresh status")
+	}
 }

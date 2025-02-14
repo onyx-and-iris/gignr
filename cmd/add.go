@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jasonuc/gignr/internal/cache"
 	"github.com/jasonuc/gignr/internal/tui"
 	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/cobra"
@@ -52,7 +53,7 @@ var addCmd = &cobra.Command{
 		viper.Set("repositories", repos)
 
 		// Set the refresh flag to true since we added a new repo
-		viper.Set("cache_needs_refresh", true)
+		cache.UpdateCacheNeedRefreshStatus(true)
 
 		// Write changes to config file
 		if err := viper.WriteConfig(); err != nil {

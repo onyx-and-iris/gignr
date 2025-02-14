@@ -6,8 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Extract owner and repo from a GitHub URL
-func ExtractRepoDetails(url string) (string, string) {
+func ExtractRepoDetails(url string) (owner, repo string, ok bool) {
 	if strings.Contains(url, "https://api.github.com/repos/") {
 		url = strings.Replace(url, "https://api.github.com/repos/", "", 1)
 	}
@@ -17,23 +16,37 @@ func ExtractRepoDetails(url string) (string, string) {
 
 	parts := strings.Split(url, "/")
 	if len(parts) < 2 {
-		return "", ""
+		return "", "", false
 	}
 
-	owner := parts[0]
-	repo := parts[1]
+	owner = parts[0]
+	repo = parts[1]
 
-	return owner, repo
+	repo = strings.TrimSuffix(repo, ".git")
+
+	if strings.Contains(url, "blob/") || strings.Contains(parts[len(parts)-1], ".") {
+		return "", "", false
+	}
+	if owner == "" || repo == "" {
+		return "", "", false
+	}
+	return owner, repo, true
 }
 
 // MatchRepoURL checks if a given path belongs to a user-added repository
 func MatchRepoURL(repoURL, path string) bool {
-	owner, repo := ExtractRepoDetails(repoURL)
+	owner, repo, ok := ExtractRepoDetails(repoURL)
+	if !ok {
+		return false
+	}
 	return strings.Contains(path, owner+"/"+repo)
 }
 
 func DetectSource(path string) string {
-	owner, repo := ExtractRepoDetails(path)
+	owner, repo, ok := ExtractRepoDetails(path)
+	if !ok {
+		return "Unknown"
+	}
 
 	fullRepoPath := owner + "/" + repo
 
@@ -51,7 +64,6 @@ func DetectSource(path string) string {
 		return "TopTal"
 	}
 
-	// Check user-added repositories
 	repos := viper.GetStringMapString("repositories")
 
 	for nickname, repoURL := range repos {
