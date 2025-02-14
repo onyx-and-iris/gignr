@@ -22,7 +22,7 @@ brews:
   - name: "gignr"
     homepage: "https://github.com/jasonuc/gignr"
     license: MIT
-    description: A CLI to create .gitignore files using templates
+    description: A CLI to effortlessly manage and generate .gitignore files
     directory: Formula
     repository:
       owner: jasonuc
