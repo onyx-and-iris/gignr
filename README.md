@@ -87,7 +87,7 @@ repositories:
 You can update this manually or use:
 
 ```sh
-gignr add https://github.com/jasonuc/crispy-guacamole -n jc
+gignr add https://github.com/jasonuc/gitignore-templates -n jc
 ```
 
 ## 🤝 Contributing
