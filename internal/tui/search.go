@@ -1,27 +1,38 @@
 package tui
 
 import (
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type SearchModel struct {
 	Tab          tea.Model
-	TextInput    any
+	TextInput    textinput.Model
 	TemplateList tea.Model
 	Keymap       any
 }
 
 func newSearchModel() *SearchModel {
+	ti := textinput.New()
+	ti.Placeholder = "Type to search templates..."
+	ti.Focus()
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(primaryColor)
+	ti.TextStyle = lipgloss.NewStyle().Foreground(textColor)
+
 	return &SearchModel{
 		Tab:          newTabModel(),
-		TextInput:    struct{}{},
+		TextInput:    ti,
 		TemplateList: newTemplateListModel(),
-		Keymap:       struct{}{},
 	}
 }
 
 func (m *SearchModel) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen)
+	return tea.Batch(
+		tea.ClearScreen,
+		tea.EnterAltScreen,
+		textinput.Blink,
+	)
 }
 
 func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,9 +57,16 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			newSource := templateSrc(tab.tabs[tab.currentTab])
 			m.TemplateList, cmd = m.TemplateList.Update(sourceChangeMsg{newSource})
 			cmds = append(cmds, cmd)
-		case "up", "down", "enter":
+		case "up", "down", "enter", "home", "end", "pgup", "pgdown":
 			m.TemplateList, cmd = m.TemplateList.Update(msg)
 			cmds = append(cmds, cmd)
+		default:
+			m.TextInput, cmd = m.TextInput.Update(msg)
+			cmds = append(cmds, cmd)
+
+			if templateList, ok := m.TemplateList.(*TemplateListModel); ok {
+				templateList.FilterTemplates(m.TextInput.Value())
+			}
 		}
 	}
 
@@ -56,12 +74,12 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *SearchModel) View() string {
-	var view string
-
-	view += m.Tab.View() + "\n"
-	view += m.TemplateList.View() + "\n"
-
-	return view
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.Tab.View(),
+		searchBoxStyle.Render(m.TextInput.View()),
+		m.TemplateList.View(),
+	)
 }
 
 func RunSearch() error {

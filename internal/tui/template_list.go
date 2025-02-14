@@ -45,14 +45,15 @@ type sourceChangeMsg struct {
 }
 
 type TemplateListModel struct {
-	Templates    CachedTemplates
-	ActiveSource templateSrc
-	viewport     viewport.Model
-	pageSize     int
-	currentPage  int
-	width        int
-	height       int
-	focused      bool
+	Templates         CachedTemplates
+	ActiveSource      templateSrc
+	viewport          viewport.Model
+	pageSize          int
+	currentPage       int
+	width             int
+	height            int
+	filteredTemplates []TemplateEntry
+	filterText        string
 }
 
 func newTemplateListModel() *TemplateListModel {
@@ -64,7 +65,7 @@ func newTemplateListModel() *TemplateListModel {
 		viewport:     viewport.New(80, 20),
 		width:        80,
 		height:       20,
-		focused:      true,
+		filterText:   "",
 	}
 
 	// Initialize all sources
@@ -104,6 +105,10 @@ func newTemplateListModel() *TemplateListModel {
 		}
 	}
 
+	if sourceData := model.Templates.Sources[string(model.ActiveSource)]; sourceData != nil {
+		model.filteredTemplates = sourceData.Templates
+	}
+
 	return model
 }
 
@@ -121,7 +126,7 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
-		m.height = msg.Height - 6 // Account for header and footer
+		m.height = msg.Height - 6
 		m.viewport.Width = m.width
 		m.viewport.Height = m.height
 		return m, nil
@@ -134,20 +139,26 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ensureVisibleItem()
 			}
 		case "down":
-			if sourceData.CurrentIndex < len(sourceData.Templates)-1 {
+			if sourceData.CurrentIndex < len(m.filteredTemplates)-1 {
 				sourceData.CurrentIndex++
 				m.ensureVisibleItem()
 			}
 		case "enter":
-			if len(sourceData.Templates) > 0 {
-				sourceData.Templates[sourceData.CurrentIndex].Selected =
-					!sourceData.Templates[sourceData.CurrentIndex].Selected
+			if len(m.filteredTemplates) > 0 {
+				idx := sourceData.CurrentIndex
+				name := m.filteredTemplates[idx].Name
+				for i, t := range sourceData.Templates {
+					if t.Name == name {
+						sourceData.Templates[i].Selected = !sourceData.Templates[i].Selected
+						break
+					}
+				}
 			}
 		case "home":
 			sourceData.CurrentIndex = 0
 			m.ensureVisibleItem()
 		case "end":
-			sourceData.CurrentIndex = len(sourceData.Templates) - 1
+			sourceData.CurrentIndex = len(m.filteredTemplates) - 1
 			m.ensureVisibleItem()
 		case "pgup":
 			sourceData.CurrentIndex -= m.pageSize
@@ -157,8 +168,8 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ensureVisibleItem()
 		case "pgdown":
 			sourceData.CurrentIndex += m.pageSize
-			if sourceData.CurrentIndex >= len(sourceData.Templates) {
-				sourceData.CurrentIndex = len(sourceData.Templates) - 1
+			if sourceData.CurrentIndex >= len(m.filteredTemplates) {
+				sourceData.CurrentIndex = len(m.filteredTemplates) - 1
 			}
 			m.ensureVisibleItem()
 		}
@@ -167,6 +178,9 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ActiveSource = msg.NewSource
 		m.currentPage = 0
 		m.viewport.GotoTop()
+		if sourceData := m.Templates.Sources[string(m.ActiveSource)]; sourceData != nil {
+			m.filteredTemplates = sourceData.Templates
+		}
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)
@@ -190,20 +204,24 @@ func (m *TemplateListModel) ensureVisibleItem() {
 }
 
 func (m *TemplateListModel) View() string {
-	sourceData, exists := m.Templates.Sources[string(m.ActiveSource)]
-	if !exists || len(sourceData.Templates) == 0 {
+	sourceData := m.Templates.Sources[string(m.ActiveSource)]
+	if sourceData == nil || len(m.filteredTemplates) == 0 {
+		message := "No templates found"
+		if m.filterText != "" {
+			message = "No matching templates found"
+		}
 		return templateListStyle.Render(
-			noTemplatesStyle.Render("No templates found in this source"))
+			noTemplatesStyle.Render(message))
 	}
 
 	// Build simple progress indicator
 	currentIdx := sourceData.CurrentIndex + 1
-	total := len(sourceData.Templates)
+	total := len(m.filteredTemplates)
 	progress := progressStyle.Render(fmt.Sprintf("(%d/%d)", currentIdx, total))
 
 	// Build template list
 	var content strings.Builder
-	for i, template := range sourceData.Templates {
+	for i, template := range m.filteredTemplates {
 		templateLine := m.renderTemplateItem(template, i == sourceData.CurrentIndex)
 		content.WriteString(templateLine + "\n")
 	}
@@ -217,7 +235,6 @@ func (m *TemplateListModel) View() string {
 	// Combine all elements
 	listContent := templateListStyle.Render(m.viewport.View())
 
-	// Combine everything with the progress indicator right-aligned
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		lipgloss.NewStyle().Width(m.width).Align(lipgloss.Right).Render(progress),
@@ -395,5 +412,37 @@ func (m *SearchModel) HandleSave() {
 
 	if err := clipboard.WriteAll(command); err != nil {
 		return
+	}
+}
+
+func (m *TemplateListModel) FilterTemplates(searchText string) {
+	m.filterText = searchText
+	sourceData := m.Templates.Sources[string(m.ActiveSource)]
+	if sourceData == nil {
+		return
+	}
+
+	// If search is empty, show all templates
+	if searchText == "" {
+		m.filteredTemplates = sourceData.Templates
+		return
+	}
+
+	// Filter templates based on search text
+	filtered := make([]TemplateEntry, 0)
+	for _, template := range sourceData.Templates {
+		if strings.Contains(
+			strings.ToLower(strings.TrimSuffix(template.Name, ".gitignore")),
+			strings.ToLower(searchText),
+		) {
+			filtered = append(filtered, template)
+		}
+	}
+
+	m.filteredTemplates = filtered
+
+	// Reset current index if it's out of bounds
+	if sourceData.CurrentIndex >= len(filtered) {
+		sourceData.CurrentIndex = 0
 	}
 }
