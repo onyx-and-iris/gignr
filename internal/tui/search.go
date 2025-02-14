@@ -86,7 +86,7 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			newSource := templateSrc(tab.tabs[tab.currentTab])
 			m.TemplateList, cmd = m.TemplateList.Update(sourceChangeMsg{newSource})
 			cmds = append(cmds, cmd)
-		case "up", "down", "enter":
+		case "up", "down", "enter", " ":
 			m.TemplateList, cmd = m.TemplateList.Update(msg)
 			cmds = append(cmds, cmd)
 		default:

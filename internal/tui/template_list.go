@@ -35,6 +35,8 @@ func newTemplateListModel(styles *AppStyle) *TemplateListModel {
 		styles:       styles,
 	}
 
+	model.viewport.KeyMap.PageDown.SetEnabled(false)
+
 	sources := []templateSrc{TopTal, GitHub, GitHubCommunity, GitHubGlobal, Others}
 	for _, source := range sources {
 		model.Templates.Sources[string(source)] = &SourceData{
@@ -103,7 +105,7 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				sourceData.CurrentIndex++
 				m.ensureVisibleItem()
 			}
-		case "enter":
+		case "enter", " ":
 			if len(m.filteredTemplates) > 0 {
 				idx := sourceData.CurrentIndex
 				name := m.filteredTemplates[idx].Name
@@ -119,9 +121,7 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ActiveSource = msg.NewSource
 		m.currentPage = 0
 		m.viewport.GotoTop()
-		if sourceData := m.Templates.Sources[string(m.ActiveSource)]; sourceData != nil {
-			m.filteredTemplates = sourceData.Templates
-		}
+		m.FilterTemplates(m.filterText)
 	}
 
 	m.viewport, cmd = m.viewport.Update(msg)
@@ -155,7 +155,7 @@ func (m *TemplateListModel) View() string {
 		lipgloss.Left,
 		m.styles.progress.Render(progress),
 		m.styles.templateList.Render(m.viewport.View()),
-		m.styles.hotkeys.Render("↑/↓: Navigate • Enter: Select • PgUp/PgDn: Page • Home/End: Jump • Shift+C: Copy Command"),
+		m.styles.hotkeys.Render("↑/↓: Navigate • Enter/Space: Select • Shift+C: Copy Command"),
 	)
 
 	return mainContent
