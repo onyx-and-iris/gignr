@@ -27,88 +27,28 @@ Available templates are identified by prefixes:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		var mergedContent strings.Builder
+		var hasErrors bool
 
 		templates.InitGitHubClient("")
-
-		// Load user-added repositories
 		repos := templates.LoadCustomRepositories()
 
 		for _, arg := range args {
-			var content []byte
-			var err error
-			var source string
-
-			if strings.Contains(arg, ":") {
-
-				req := strings.SplitAfter(arg, ":")
-				reqPrefix := strings.TrimSpace(req[0][:len(req[0])-1])
-				templateName := strings.TrimSpace(req[1])
-
-				var owner, repo, path string
-				switch reqPrefix {
-				case "tt":
-					owner, repo, path = "toptal", "gitignore", "templates"
-				case "gh":
-					owner, repo, path = "github", "gitignore", ""
-				case "ghc":
-					owner, repo, path = "github", "gitignore", "community"
-				case "ghg":
-					owner, repo, path = "github", "gitignore", "Global"
-				default:
-					// If the prefix is a user-defined repo, resolve its URL
-					if repoURL, exists := repos[reqPrefix]; exists {
-						owner, repo = utils.ExtractRepoDetails(repoURL)
-						path = ""
-					} else {
-						utils.PrintError(fmt.Sprintf("Unknown template prefix or missing repository: %s\n", reqPrefix))
-						continue
-					}
-				}
-
-				templateList, err := templates.FetchTemplates(owner, repo, path, reqPrefix)
-				if err != nil {
-					utils.PrintError(fmt.Sprintf("Unable to fetch templates from %s: %v\n", reqPrefix, err))
-					utils.PrintAlert("No .gitignore file created.")
-					return
-				}
-
-				var downloadURL string
-				for _, tmpl := range templateList {
-					if strings.EqualFold(tmpl.Name, templateName+".gitignore") {
-						downloadURL = tmpl.DownloadURL
-						break
-					}
-				}
-
-				if downloadURL == "" {
-					utils.PrintError(fmt.Sprintf("Template %s not found in %s.\n", templateName, reqPrefix))
-					continue
-				}
-
-				content, err = templates.GetTemplateContent(downloadURL)
-				source = reqPrefix
-			} else {
-				// Attemt to fetch from local storage if no prefix is provided
-				content, err = templates.GetLocalTemplate(arg)
-				source = "local"
-			}
-
+			content, source, err := processTemplate(arg, repos)
 			if err != nil {
-				utils.PrintError(fmt.Sprintf("Unable to fetch content for %s: %v\n", arg, err))
+				utils.PrintError(fmt.Sprintf("Error processing %s: %v", arg, err))
+				hasErrors = true
 				continue
 			}
 
-			config := box.Config{Px: 1, Py: 1, Type: "", TitlePos: "Inside"}
-			boxNew := box.Box{TopRight: "*", TopLeft: "*", BottomRight: "*", BottomLeft: "*", Horizontal: "-", Vertical: "|", Config: config}
-
-			mergedContent.WriteString(boxNew.String("", fmt.Sprintf(" %s Template (%s)", strings.ToUpper(arg), strings.ToUpper(source))))
-			mergedContent.Write(content)
-			mergedContent.WriteString("\n\n")
+			addTemplateToContent(&mergedContent, arg, source, content)
 		}
 
-		err := os.WriteFile(".gitignore", []byte(mergedContent.String()), 0644)
-		if err != nil {
-			utils.PrintError(fmt.Sprintf("Failed to write .gitignore file: %v\n", err))
+		if hasErrors {
+			utils.PrintWarning("Some templates failed to process. .gitignore file will be incomplete.")
+		}
+
+		if err := os.WriteFile(".gitignore", []byte(mergedContent.String()), 0644); err != nil {
+			utils.PrintError(fmt.Sprintf("Failed to write .gitignore file: %v", err))
 			return
 		}
 
@@ -118,4 +58,113 @@ Available templates are identified by prefixes:
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+}
+
+type TemplateSource struct {
+	owner string
+	repo  string
+	path  string
+}
+
+func resolveTemplateSource(prefix string, repos map[string]string) (*TemplateSource, error) {
+	switch prefix {
+	case "tt":
+		return &TemplateSource{"toptal", "gitignore", "templates"}, nil
+	case "gh":
+		return &TemplateSource{"github", "gitignore", ""}, nil
+	case "ghc":
+		return &TemplateSource{"github", "gitignore", "community"}, nil
+	case "ghg":
+		return &TemplateSource{"github", "gitignore", "Global"}, nil
+	default:
+		// Check user-defined repos
+		if repoURL, exists := repos[prefix]; exists {
+			owner, repo, ok := utils.ExtractRepoDetails(repoURL)
+			if !ok {
+				return nil, fmt.Errorf("invalid repository URL for prefix %s", prefix)
+			}
+			return &TemplateSource{owner, repo, ""}, nil
+		}
+		return nil, fmt.Errorf("unknown template prefix or missing repository: %s", prefix)
+	}
+}
+
+func findTemplate(templateName string, templates []templates.Template) (string, error) {
+	// Try exact match first
+	for _, tmpl := range templates {
+		if tmpl.Name == templateName+".gitignore" {
+			return tmpl.DownloadURL, nil
+		}
+	}
+
+	// Try case-insensitive match
+	for _, tmpl := range templates {
+		if strings.EqualFold(tmpl.Name, templateName+".gitignore") {
+			return tmpl.DownloadURL, nil
+		}
+	}
+
+	return "", fmt.Errorf("template %s not found", templateName)
+}
+
+func createTemplateBox() box.Box {
+	config := box.Config{Px: 1, Py: 1, Type: "", TitlePos: "Inside"}
+	return box.Box{
+		TopRight: "*", TopLeft: "*",
+		BottomRight: "*", BottomLeft: "*",
+		Horizontal: "-", Vertical: "|",
+		Config: config,
+	}
+}
+
+func addTemplateToContent(builder *strings.Builder, templateName, source string, content []byte) {
+	boxTitle := fmt.Sprintf(" %s Template (%s)",
+		strings.ToUpper(templateName),
+		strings.ToUpper(source))
+
+	box := createTemplateBox()
+	builder.WriteString(box.String("", boxTitle))
+	builder.Write(content)
+	builder.WriteString("\n\n")
+}
+
+func processTemplate(arg string, repos map[string]string) (content []byte, source string, err error) {
+	if strings.Contains(arg, ":") {
+		// Handle remote templates (gh:, tt:, etc)
+		parts := strings.SplitAfter(arg, ":")
+		prefix := strings.TrimSpace(parts[0][:len(parts[0])-1])
+		templateName := strings.TrimSpace(parts[1])
+
+		src, err := resolveTemplateSource(prefix, repos)
+		if err != nil {
+			return nil, "", err
+		}
+
+		// Fetch available templates
+		templateList, err := templates.FetchTemplates(src.owner, src.repo, src.path, prefix)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to fetch templates from %s: %v", prefix, err)
+		}
+
+		// Find the specific template
+		downloadURL, err := findTemplate(templateName, templateList)
+		if err != nil {
+			return nil, "", err
+		}
+
+		content, err = templates.GetTemplateContent(downloadURL)
+		if err != nil {
+			return nil, "", fmt.Errorf("unable to fetch content: %v", err)
+		}
+
+		return content, prefix, nil
+	}
+
+	// Handle local templates
+	content, err = templates.GetLocalTemplate(arg)
+	if err != nil {
+		return nil, "", fmt.Errorf("unable to fetch local template: %v", err)
+	}
+
+	return content, "local", nil
 }
