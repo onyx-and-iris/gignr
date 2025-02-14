@@ -1,26 +1,28 @@
 package tui
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type TabModel struct {
 	currentTab int
 	tabs       []string
+	styles     *AppStyle
 }
 
-func newTabModel() *TabModel {
+func newTabModel(styles *AppStyle) *TabModel {
 	tabs := []string{"TopTal", "GitHub", "GitHub Community", "GitHub Global", "Others"}
-
 	return &TabModel{
 		currentTab: 0,
 		tabs:       tabs,
+		styles:     styles,
 	}
 }
 
 func (m *TabModel) Init() tea.Cmd {
-	return nil
+	return tea.ClearScreen
 }
 
 func (m *TabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -46,19 +48,22 @@ func (m *TabModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *TabModel) View() string {
-	var view string
+	var tabContent strings.Builder
 
 	for i, tab := range m.tabs {
 		if i == m.currentTab {
-			view += activeTabStyle.Render(tab)
+			tabContent.WriteString(m.styles.activeTab.Render(tab))
 		} else {
-			view += inactiveTabStyle.Render(tab)
+			tabContent.WriteString(m.styles.inactiveTab.Render(tab))
 		}
-
 		if i < len(m.tabs)-1 {
-			view += dividerStyle.Render()
+			tabContent.WriteString(m.styles.divider.Render())
 		}
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Left, tabSection.Render(view), title.Render("gignr"))
+	return m.styles.tabSection.Render(tabContent.String())
+}
+
+func (m *TabModel) SetStyles(styles *AppStyle) {
+	m.styles = styles
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/jasonuc/gignr/internal/utils"
 )
 
-// RunConfirmation displays a clean confirmation UI using huh
 func RunConfirmation(prompt string) bool {
 	var confirmed bool
 
