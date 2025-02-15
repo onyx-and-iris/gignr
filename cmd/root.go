@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/fatih/color"
 	cc "github.com/ivanpirog/coloredcobra"
+	"github.com/jasonuc/gignr/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,7 +22,7 @@ Created by github.com/jasonuc.
 Visit %v for more information.`, color.New(color.FgBlue).Sprint("https://github.com/jasonuc/gignr")),
 }
 
-func Execute() {
+func Execute(currentVersion string) error {
 	cc.Init(&cc.Config{
 		RootCmd:  rootCmd,
 		Headings: cc.HiCyan + cc.Bold + cc.Underline,
@@ -30,10 +32,12 @@ func Execute() {
 		Flags:    cc.Bold,
 	})
 
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
+	rootCmd.Version = currentVersion
+	info := version.FetchUpdateInfo(rootCmd.Version)
+	defer info.PromptUpdateIfAvailable()
+	ctx := version.WithContext(context.Background(), &info)
+
+	return rootCmd.ExecuteContext(ctx)
 }
 
 func init() {

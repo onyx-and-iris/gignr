@@ -1,7 +1,17 @@
 package main
 
-import "github.com/jasonuc/gignr/cmd"
+import (
+	"os"
+
+	"github.com/jasonuc/gignr/cmd"
+	"github.com/jasonuc/gignr/internal/utils"
+)
+
+var currentVersion = "v1.1.0"
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(currentVersion); err != nil {
+		utils.PrintError(err.Error())
+		os.Exit(1)
+	}
 }
