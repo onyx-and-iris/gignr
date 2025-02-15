@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -22,7 +22,7 @@ Created by github.com/jasonuc.
 Visit %v for more information.`, color.New(color.FgBlue).Sprint("https://github.com/jasonuc/gignr")),
 }
 
-func Execute(currentVersion string) error {
+func execute() error {
 	cc.Init(&cc.Config{
 		RootCmd:  rootCmd,
 		Headings: cc.HiCyan + cc.Bold + cc.Underline,
