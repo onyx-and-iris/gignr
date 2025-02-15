@@ -9,15 +9,9 @@ import (
 )
 
 func ExtractRepoDetails(url string) (owner, repo string, err error) {
-	if strings.Contains(url, "https://raw.githubusercontent.com/") {
-		url = strings.Replace(url, "https://raw.githubusercontent.com/", "", 1)
-	}
-	if strings.Contains(url, "https://api.github.com/repos/") {
-		url = strings.Replace(url, "https://api.github.com/repos/", "", 1)
-	}
-	if strings.Contains(url, "https://github.com/") {
-		url = strings.Replace(url, "https://github.com/", "", 1)
-	}
+	url = strings.Replace(url, "https://raw.githubusercontent.com/", "", 1)
+	url = strings.Replace(url, "https://api.github.com/repos/", "", 1)
+	url = strings.Replace(url, "https://github.com/", "", 1)
 
 	parts := strings.Split(url, "/")
 	if len(parts) < 2 {
@@ -28,14 +22,6 @@ func ExtractRepoDetails(url string) (owner, repo string, err error) {
 	repo = parts[1]
 
 	repo = strings.TrimSuffix(repo, ".git")
-
-	// Only check for blob URLs, remove the period check
-	if strings.Contains(url, "blob/") {
-		return "", "", fmt.Errorf("invalid URL")
-	}
-	if owner == "" || repo == "" {
-		return "", "", fmt.Errorf("invalid URL")
-	}
 	return owner, repo, nil
 }
 
