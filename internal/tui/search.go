@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jasonuc/gignr/internal/utils"
 )
 
 type SearchModel struct {
@@ -14,6 +15,8 @@ type SearchModel struct {
 	styles       *AppStyle
 	width        int
 	height       int
+
+	didCopyToClipboard bool
 }
 
 func newSearchModel() *SearchModel {
@@ -71,10 +74,22 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "esc":
+		case "ctrl+c":
+			return m, tea.Quit
+		case "esc":
+			if templateList, ok := m.TemplateList.(*TemplateListModel); ok {
+				if selected := templateList.GetSelectedTemplates(); len(selected) > 0 {
+					m.HandleSave()
+					m.didCopyToClipboard = true
+				}
+			}
 			return m, tea.Quit
 		case "C":
-			m.HandleSave()
+			if templateList, ok := m.TemplateList.(*TemplateListModel); ok {
+				if len(templateList.GetSelectedTemplates()) > 0 {
+					m.HandleSave()
+				}
+			}
 		case "left", "right", "tab":
 			m.Tab, cmd = m.Tab.Update(msg)
 			cmds = append(cmds, cmd)
@@ -115,8 +130,19 @@ func (m *SearchModel) View() string {
 }
 
 func RunSearch() error {
-	if _, err := tea.NewProgram(newSearchModel()).Run(); err != nil {
+	p := tea.NewProgram(newSearchModel())
+	finalModel, err := p.Run()
+	if err != nil {
 		return err
 	}
+
+	if m, ok := finalModel.(*SearchModel); ok {
+		if m.didCopyToClipboard {
+			utils.PrintSuccess("Copied selected templates to clipboard")
+		} else {
+			utils.PrintAlert("Exited search with nothing copied")
+		}
+	}
+
 	return nil
 }

@@ -19,5 +19,5 @@ func PrintSuccess(success string) {
 }
 
 func PrintAlert(alert string) {
-	fmt.Println(color.New(color.BgMagenta, color.FgWhite).Sprint(" Alert "), alert)
+	fmt.Println(color.New(color.BgMagenta, color.FgBlack).Sprint(" Alert "), alert)
 }
