@@ -164,7 +164,7 @@ func (m *TemplateListModel) View() string {
 		lipgloss.Left,
 		m.styles.progress.Render(progress),
 		m.styles.templateList.Render(m.viewport.View()),
-		m.styles.hotkeys.Render("↑/↓: Navigate • Enter/Space: Select • Shift+C: Copy Command"),
+		m.styles.hotkeys.Render("↑/↓: Navigate • ENTER/SPACE: Select • ESCAPE/SHIFT+C: Copy Command • CTRL+C: Quit"),
 	)
 
 	return mainContent
