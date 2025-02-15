@@ -109,9 +109,18 @@ func (m *TemplateListModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(m.filteredTemplates) > 0 {
 				idx := sourceData.CurrentIndex
 				name := m.filteredTemplates[idx].Name
+
 				for i, t := range sourceData.Templates {
 					if t.Name == name {
 						sourceData.Templates[i].Selected = !sourceData.Templates[i].Selected
+						newSelectedState := sourceData.Templates[i].Selected
+
+						for j, ft := range m.filteredTemplates {
+							if ft.Name == name {
+								m.filteredTemplates[j].Selected = newSelectedState
+								break
+							}
+						}
 						break
 					}
 				}
