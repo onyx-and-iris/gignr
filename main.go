@@ -7,7 +7,7 @@ import (
 	"github.com/jasonuc/gignr/internal/utils"
 )
 
-var currentVersion = "v1.1.0"
+var currentVersion = "v1.3.0"
 
 func main() {
 	if err := cmd.Execute(currentVersion); err != nil {
