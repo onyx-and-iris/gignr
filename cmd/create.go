@@ -7,6 +7,7 @@ import (
 
 	"github.com/Delta456/box-cli-maker/v2"
 	"github.com/jasonuc/gignr/internal/templates"
+	"github.com/jasonuc/gignr/internal/tui"
 	"github.com/jasonuc/gignr/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -26,6 +27,14 @@ Available templates are identified by prefixes:
   - (no prefix) → Fetch from local saved templates
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Check for existing .gitignore
+		if content, err := os.ReadFile(".gitignore"); err == nil && len(content) > 0 {
+			if !tui.RunConfirmation("A .gitignore file already exists. Do you want to overwrite it?") {
+				utils.PrintAlert(".gitignore file has not been modified")
+				return
+			}
+		}
+
 		var mergedContent strings.Builder
 		var hasErrors bool
 
