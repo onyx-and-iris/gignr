@@ -33,14 +33,14 @@ Available templates are identified by prefixes:
 		repos := templates.LoadCustomRepositories()
 
 		for _, arg := range args {
-			content, source, err := processTemplate(arg, repos)
+			content, err := processTemplate(arg, repos)
 			if err != nil {
 				utils.PrintError(fmt.Sprintf("Error processing %s: %v", arg, err))
 				hasErrors = true
 				continue
 			}
 
-			addTemplateToContent(&mergedContent, arg, source, content)
+			addTemplateToContent(&mergedContent, arg, content)
 		}
 
 		if hasErrors {
@@ -117,10 +117,9 @@ func createTemplateBox() box.Box {
 	}
 }
 
-func addTemplateToContent(builder *strings.Builder, templateName, source string, content []byte) {
-	boxTitle := fmt.Sprintf(" %s Template (%s)",
-		strings.ToUpper(templateName),
-		strings.ToUpper(source))
+func addTemplateToContent(builder *strings.Builder, templateName string, content []byte) {
+	boxTitle := fmt.Sprintf(" %s",
+		strings.ToUpper(templateName))
 
 	box := createTemplateBox()
 	builder.WriteString(box.String("", boxTitle))
@@ -128,7 +127,7 @@ func addTemplateToContent(builder *strings.Builder, templateName, source string,
 	builder.WriteString("\n\n")
 }
 
-func processTemplate(arg string, repos map[string]string) (content []byte, source string, err error) {
+func processTemplate(arg string, repos map[string]string) (content []byte, err error) {
 	if strings.Contains(arg, ":") {
 		// Handle remote templates (gh:, tt:, etc)
 		parts := strings.SplitAfter(arg, ":")
@@ -137,34 +136,34 @@ func processTemplate(arg string, repos map[string]string) (content []byte, sourc
 
 		src, err := resolveTemplateSource(prefix, repos)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		// Fetch available templates
 		templateList, err := templates.FetchTemplates(src.owner, src.repo, src.path, prefix)
 		if err != nil {
-			return nil, "", fmt.Errorf("unable to fetch templates from %s: %v", prefix, err)
+			return nil, fmt.Errorf("unable to fetch templates from %s: %v", prefix, err)
 		}
 
 		// Find the specific template
 		downloadURL, err := findTemplate(templateName, templateList)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		content, err = templates.GetTemplateContent(downloadURL)
 		if err != nil {
-			return nil, "", fmt.Errorf("unable to fetch content: %v", err)
+			return nil, fmt.Errorf("unable to fetch content: %v", err)
 		}
 
-		return content, prefix, nil
+		return content, nil
 	}
 
 	// Handle local templates
 	content, err = templates.GetLocalTemplate(arg)
 	if err != nil {
-		return nil, "", fmt.Errorf("unable to fetch local template: %v", err)
+		return nil, fmt.Errorf("unable to fetch local template: %v", err)
 	}
 
-	return content, "local", nil
+	return content, nil
 }
