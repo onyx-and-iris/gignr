@@ -25,10 +25,30 @@ func LoadCachedTemplates(source string) ([]Template, error) {
 }
 
 // SaveTemplatesToCache stores fetched templates in the cache
-func SaveTemplatesToCache(cacheFile string, templates []Template) {
+func SaveTemplatesToCache(cacheFile string, newTemplates []Template) {
+	var existingCache TemplatesCache
+	cache.LoadCache(cacheFile, &existingCache)
+
+	if !cache.IsCacheExpired(existingCache.Updated) {
+		existing := make(map[string]Template)
+		for _, t := range existingCache.Templates {
+			existing[t.Path] = t
+		}
+
+		for _, t := range newTemplates {
+			existing[t.Path] = t
+		}
+
+		var merged []Template
+		for _, t := range existing {
+			merged = append(merged, t)
+		}
+		newTemplates = merged
+	}
+
 	cacheData := TemplatesCache{
 		Updated:   time.Now(),
-		Templates: templates,
+		Templates: newTemplates,
 	}
 
 	cache.SaveCache(cacheFile, cacheData)

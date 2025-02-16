@@ -52,11 +52,15 @@ func FetchTemplates(owner, repo, path, sourceID string) ([]Template, error) {
 	return templates, nil
 }
 
-func getCacheFileName(owner, sourceID string) string {
-	if sourceID != "" {
-		return fmt.Sprintf("%s.json", sourceID)
+func getCacheFileName(owner, _ string) string {
+	switch owner {
+	case "github":
+		return "github.json"
+	case "toptal":
+		return "toptal.json"
+	default:
+		return fmt.Sprintf("%s.json", owner)
 	}
-	return fmt.Sprintf("%s.json", owner)
 }
 
 func fetchFromGitHub(owner, repo, path string) ([]Template, error) {
@@ -66,10 +70,14 @@ func fetchFromGitHub(owner, repo, path string) ([]Template, error) {
 		return nil, err
 	}
 
+	var templates []Template
 	if contents != nil {
-		return handleSingleFile(contents), nil
+		templates = handleSingleFile(contents)
+	} else {
+		templates = handleDirectory(owner, repo, dirContents)
 	}
-	return handleDirectory(owner, repo, dirContents), nil
+
+	return templates, nil
 }
 
 func handleSingleFile(content *github.RepositoryContent) []Template {
