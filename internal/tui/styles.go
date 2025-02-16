@@ -46,7 +46,7 @@ func (s *AppStyle) SetSize(width, height int) {
 func (s *AppStyle) refresh() {
 	contentWidth := s.width - 4
 
-	templateListHeight := s.height - 20
+	templateListHeight := s.height - 15
 
 	s.tabSection = lipgloss.NewStyle().
 		Padding(0, 1).
