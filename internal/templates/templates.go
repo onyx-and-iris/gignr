@@ -52,14 +52,14 @@ func FetchTemplates(owner, repo, path, sourceID string) ([]Template, error) {
 	return templates, nil
 }
 
-func getCacheFileName(owner, _ string) string {
+func getCacheFileName(owner, sourceID string) string {
 	switch owner {
 	case "github":
 		return "github.json"
 	case "toptal":
 		return "toptal.json"
 	default:
-		return fmt.Sprintf("%s.json", owner)
+		return fmt.Sprintf("%s.json", sourceID)
 	}
 }
 
